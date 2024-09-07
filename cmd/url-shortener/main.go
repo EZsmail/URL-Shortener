@@ -1,22 +1,14 @@
 package main
 
-type window struct {
-	place string
-}
-
-type car struct {
-	window,
-	wheelNum int
-	psOne, psTwo string
-}
-
-var (
-	name = "Anatoly"
-	age  = 10
+import (
+	"fmt"
+	"restapi/URL-Shortener/internal/config"
 )
 
 func main() {
-	// TODO: init config: cleanenv
+
+	cfg := config.MustLoad()
+	fmt.Println(cfg)
 
 	// TODO: init logger: log
 
