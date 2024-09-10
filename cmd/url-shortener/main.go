@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 	"restapi/URL-Shortener/internal/config"
@@ -30,7 +31,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = storage
+	db := storage
+
+	id, err := db.SaveURL("www.google.com", "8.8.8.8")
+	if err != nil {
+		fmt.Println(fmt.Errorf("%s", err))
+	}
+	fmt.Println(id)
+
 	// TODO: init router: chi, "chi render"
 
 	// TODO: run server:
