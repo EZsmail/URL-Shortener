@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"restapi/URL-Shortener/internal/config"
@@ -31,13 +30,28 @@ func main() {
 		os.Exit(1)
 	}
 
-	db := storage
+	_ = storage
+	// _, err = storage.SaveURL("www.google.com", "8.8.8.8")
 
-	id, err := db.SaveURL("www.google.com", "8.8.8.8")
-	if err != nil {
-		fmt.Println(fmt.Errorf("%s", err))
-	}
-	fmt.Println(id)
+	// if err != nil {
+	// 	slog.Error("falied to add alias", sl.Err(err))
+	// }
+
+	// url, err := storage.GetURL("8.8.8.8")
+
+	// if err != nil {
+	// 	slog.Error("failed to get alias", sl.Err(err))
+	// }
+
+	// fmt.Println(url)
+
+	// id, err := storage.DelURLByAlias("8.8.8.8")
+
+	// if err != nil {
+	// 	slog.Error("failed to del url by alias", sl.Err(err))
+	// }
+
+	// fmt.Println(id)
 
 	// TODO: init router: chi, "chi render"
 

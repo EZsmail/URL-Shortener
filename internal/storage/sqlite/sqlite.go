@@ -68,3 +68,95 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) { //del
 
 	return id, nil
 }
+
+func (s *Storage) GetURL(alias string) (string, error) {
+	const op = "storage.sqlite.GetURL"
+
+	stmt, err := s.db.Prepare("SELECT url.url FROM url WHERE alias = ?")
+
+	if err != nil {
+		return "", fmt.Errorf("%s: failed to get db: %w", op, err)
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Query(alias)
+
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrNoExtended(sqlite3.ErrNotFound) {
+			return "", fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
+		}
+		return "", fmt.Errorf("%s: failed to get url: %w", op, err)
+	}
+
+	defer res.Close()
+
+	var url string
+
+	for res.Next() {
+		err = res.Scan(&url)
+		if err != nil {
+			return "", fmt.Errorf("%s: failed to read a line: %w", op, err)
+		}
+	}
+
+	return url, nil
+}
+
+func (s *Storage) DelURLByID(id int) (int, error) {
+	op := "storage.sqlite.DelURLByID"
+
+	stmt, err := s.db.Prepare("DELETE FROM url WHERE id = ?")
+
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to get db: %w", op, err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrNoExtended(sqlite3.ErrNotFound) {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
+		}
+		return 0, fmt.Errorf("%s: failed to del url: %w", op, err)
+	}
+
+	return id, nil
+}
+
+func (s *Storage) DelURLByAlias(alias string) (int, error) {
+	op := "storage.sqlite.DelURLByAlias"
+
+	stmt, err := s.db.Prepare("SELECT id FROM url WHERE alias = ?")
+
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to get db: %w", op, err)
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Query(alias)
+
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrNoExtended(sqlite3.ErrNotFound) {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrURLNotFound)
+		}
+		return 0, fmt.Errorf("%s: failed to get id: %w", op, err)
+	}
+
+	var id int
+
+	for res.Next() {
+		err = res.Scan(&id)
+		if err != nil {
+			return 0, fmt.Errorf("%s: failed to read a line: %w", op, err)
+		}
+	}
+
+	_, err = s.db.Exec("DELETE FROM url WHERE alias = ?", alias)
+
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to del url: %w", op, err)
+	}
+
+	return id, nil
+}
