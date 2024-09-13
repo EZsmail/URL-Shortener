@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"restapi/URL-Shortener/internal/config"
+	"restapi/URL-Shortener/internal/http-server/handlers/url/save"
 	mwLogger "restapi/URL-Shortener/internal/http-server/middleware/logger"
 	"restapi/URL-Shortener/internal/lib/handlers/slogpretty"
 	"restapi/URL-Shortener/internal/lib/logger/sl"
@@ -45,7 +46,9 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	// TODO: init router: chi, "chi render"
+	router.Post("/url", save.New(log, storage))
+
+	log.Info("starting server", slog.String("address", cfg.Address))
 
 	// TODO: run server:
 }
