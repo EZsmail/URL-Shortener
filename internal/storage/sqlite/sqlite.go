@@ -22,6 +22,7 @@ func New(storagePath string) (storage *Storage, err error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
+	// TODO: Unique url
 	stmt, err := db.Prepare(`
 	CREATE TABLE IF NOT EXISTS url (
     id INTEGER PRIMARY KEY,
@@ -90,6 +91,7 @@ func (s *Storage) GetURL(alias string) (string, error) {
 
 	defer res.Close()
 
+	// TODO: change to stmt.QueryRow().Scan(&name)
 	var url string
 
 	for res.Next() {

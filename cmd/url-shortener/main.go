@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"restapi/URL-Shortener/internal/config"
 	"restapi/URL-Shortener/internal/http-server/handlers/url/save"
@@ -50,7 +51,19 @@ func main() {
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
-	// TODO: run server:
+	srv := &http.Server{
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.IdleTimeout,
+	}
+
+	if err := srv.ListenAndServe(); err != nil {
+		log.Error("failed to start server")
+	}
+
+	log.Error("server stoped")
 }
 
 func setupLogger(env string) *slog.Logger {
