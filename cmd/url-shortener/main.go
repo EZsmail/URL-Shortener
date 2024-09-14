@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"restapi/URL-Shortener/internal/config"
+	"restapi/URL-Shortener/internal/http-server/handlers/url/get"
 	"restapi/URL-Shortener/internal/http-server/handlers/url/save"
 	mwLogger "restapi/URL-Shortener/internal/http-server/middleware/logger"
 	"restapi/URL-Shortener/internal/lib/handlers/slogpretty"
@@ -48,6 +49,7 @@ func main() {
 	router.Use(middleware.URLFormat)
 
 	router.Post("/url", save.New(log, storage))
+	router.Get("/url", get.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
@@ -60,7 +62,7 @@ func main() {
 	}
 
 	if err := srv.ListenAndServe(); err != nil {
-		log.Error("failed to start server")
+		log.Error("failed to start server", sl.Err(err))
 	}
 
 	log.Error("server stoped")

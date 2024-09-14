@@ -1,13 +1,11 @@
-package save
+package get
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"restapi/URL-Shortener/internal/lib/api/response"
 	"restapi/URL-Shortener/internal/lib/logger/sl"
-	"restapi/URL-Shortener/internal/lib/random"
 	"restapi/URL-Shortener/internal/storage"
 
 	"github.com/go-chi/chi/middleware"
@@ -16,39 +14,33 @@ import (
 )
 
 type Request struct {
-	URL   string `json:"url" valodate:"required,url"`
-	Alias string `json:"alias,omitempty"`
+	Alias string `json:"alias"`
 }
 
 type Response struct {
 	response.Response
 	Alias string `json:"alias,omitempty"`
+	Url   string `json:"url"`
 }
 
-type URLSaver interface {
-	SaveURL(urlToSave string, alias string) (int64, error)
+type URLGetter interface {
+	GetURL(alias string) (string, error)
 }
 
-// cfg?
-var aliasLength = 4
-
-func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
+func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		const op = "handlers.url.save.New"
+		const op = "handlers.url.get.New"
 
-		log = log.With(
+		log.With(
 			slog.String("op", op),
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
 		var req Request
 
-		// TODO: Remove this log
-		log.Debug("Debug request:", slog.String("Request", fmt.Sprint(req)))
-
 		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
-			log.Error("failed to decode request body", sl.Err(err))
+			log.Error("failed to decode request body")
 
 			render.JSON(w, r, response.Error("failed to decode request"))
 
@@ -57,48 +49,48 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 		log.Info("request body decoded", slog.Any("request", req))
 
-		// Validation
+		// TODO: Validator dont work
 		if err := validator.New().Struct(req); err != nil {
 			validateErr := err.(validator.ValidationErrors)
 
 			log.Error("invalid request", sl.Err(err))
 
-			// render.JSON(w, r, response.Error("invalide request"))
 			render.JSON(w, r, response.ValidationError(validateErr))
 
 			return
 		}
 
-		// TODO: unique alias
-		alias := req.Alias
-		if alias == "" {
-			alias = random.NewRandomString(aliasLength)
+		var alias = req.Alias
+
+		url, err := urlGetter.GetURL(alias)
+
+		if url == "" {
+			log.Debug("url not found", slog.String("alias", alias), slog.String("url", url))
 		}
 
-		// TODO: Change error
-		id, err := urlSaver.SaveURL(req.URL, alias)
-		if errors.Is(err, storage.ErrURLExists) {
-			log.Info("url aready exists", slog.String("url", req.URL))
+		// TODO: Change alias=="" to ErrAlias not found
+		if errors.Is(err, storage.ErrAliasNotFound) {
+			log.Info("alias not found", slog.String("alias", alias))
 
-			render.JSON(w, r, response.Error("url already exists"))
+			render.JSON(w, r, response.Error("alias not found"))
 
 			return
 		}
 
 		if err != nil {
-			log.Error("failed to add url", sl.Err(err))
+			log.Error("failed to get url", sl.Err(err))
 
-			render.JSON(w, r, response.Error("failed to add url"))
+			render.JSON(w, r, response.Error("failed to get url"))
 
 			return
 		}
 
-		log.Info("url added", slog.Int64("id", id))
+		log.Info("url founded", slog.String("url", url))
 
-		// TODO: Change to ResponseOK func
 		render.JSON(w, r, Response{
 			Response: response.OK(),
 			Alias:    alias,
+			Url:      url,
 		})
 	}
 }
