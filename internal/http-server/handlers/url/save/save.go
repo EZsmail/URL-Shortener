@@ -70,6 +70,7 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		}
 
 		// TODO: unique alias
+		// TODO: Check if url is empty
 		alias := req.Alias
 		if alias == "" {
 			alias = random.NewRandomString(aliasLength)
