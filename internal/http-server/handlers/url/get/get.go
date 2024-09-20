@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
 )
 
 type Request struct {

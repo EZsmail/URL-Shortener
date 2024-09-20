@@ -3,6 +3,7 @@ package save
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"restapi/URL-Shortener/internal/lib/api/response"
@@ -12,11 +13,11 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
 )
 
 type Request struct {
-	URL   string `json:"url" valodate:"required,url"`
+	URL   string `json:"url" validate:"required,url"`
 	Alias string `json:"alias,omitempty"`
 }
 
@@ -47,6 +48,15 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		log.Debug("Debug request:", slog.String("Request", fmt.Sprint(req)))
 
 		err := render.DecodeJSON(r.Body, &req)
+
+		if errors.Is(err, io.EOF) {
+			log.Error("request body is empty")
+
+			render.JSON(w, r, response.Error("empty request"))
+
+			return
+		}
+
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 
@@ -63,14 +73,13 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 
 			log.Error("invalid request", sl.Err(err))
 
-			// render.JSON(w, r, response.Error("invalide request"))
 			render.JSON(w, r, response.ValidationError(validateErr))
 
 			return
 		}
 
 		// TODO: unique alias
-		// TODO: Check if url is empty
+		// TODO: Check if url is
 		alias := req.Alias
 		if alias == "" {
 			alias = random.NewRandomString(aliasLength)
