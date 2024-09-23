@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"restapi/URL-Shortener/internal/config"
+	"restapi/URL-Shortener/internal/http-server/handlers/url/delete"
 	"restapi/URL-Shortener/internal/http-server/handlers/url/get"
 	"restapi/URL-Shortener/internal/http-server/handlers/url/redirect"
 	"restapi/URL-Shortener/internal/http-server/handlers/url/save"
@@ -49,7 +50,14 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, storage))
+	router.Route("/url", func(r chi.Router) {
+		r.Use(middleware.BasicAuth("url-shortener", map[string]string{
+			cfg.HTTPServer.User: cfg.HTTPServer.Password,
+		}))
+		r.Post("/", save.New(log, storage))
+		r.Delete("/", delete.New(log, storage))
+	})
+
 	router.Get("/url", get.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
 

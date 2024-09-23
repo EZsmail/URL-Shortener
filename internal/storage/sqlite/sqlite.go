@@ -151,6 +151,10 @@ func (s *Storage) DelURLByAlias(alias string) (int, error) {
 
 	var id int
 
+	if !res.Next() {
+		return 0, fmt.Errorf("%s: undefined alias: %s", op, alias)
+	}
+
 	for res.Next() {
 		err = res.Scan(&id)
 		if err != nil {
@@ -163,6 +167,5 @@ func (s *Storage) DelURLByAlias(alias string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("%s: failed to del url: %w", op, err)
 	}
-
 	return id, nil
 }

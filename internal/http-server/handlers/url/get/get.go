@@ -27,6 +27,8 @@ type URLGetter interface {
 	GetURL(alias string) (string, error)
 }
 
+// TODO: rewrite handler
+
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const op = "handlers.url.get.New"
