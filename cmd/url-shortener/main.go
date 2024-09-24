@@ -12,7 +12,7 @@ import (
 	mwLogger "restapi/URL-Shortener/internal/http-server/middleware/logger"
 	"restapi/URL-Shortener/internal/lib/handlers/slogpretty"
 	"restapi/URL-Shortener/internal/lib/logger/sl"
-	"restapi/URL-Shortener/internal/storage/sqlite"
+	"restapi/URL-Shortener/internal/storage/postgresql"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -33,7 +33,7 @@ func main() {
 	log.Info("starting url-shortener", slog.String("env", cfg.Env))
 	log.Debug("debug messages are enabled")
 
-	storage, err := sqlite.New(cfg.StoragePath)
+	storage, err := postgresql.New(cfg.StoragePath)
 
 	if err != nil {
 		log.Error("failed to init storage", sl.Err(err))
